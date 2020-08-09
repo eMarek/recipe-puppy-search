@@ -1,0 +1,49 @@
+{
+  "name": "recipe-puppy-search",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "node server.js",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "prettier": "yarn prettier:write",
+    "prettier:write": "prettier --write ."
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "dependencies": {
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
+    "cors-anywhere": "^0.4.3",
+    "lodash": "^4.17.19",
+    "material-ui-chip-input": "^1.1.0",
+    "react": "^16.13.1",
+    "react-cookie": "^4.0.3",
+    "react-dom": "^16.13.1",
+    "react-infinite-scroller": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.0",
+    "@types/lodash": "^4.14.159",
+    "@types/node": "^12.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "@types/react-infinite-scroller": "^1.2.1",
+    "prettier": "^2.0.5",
+    "react-scripts": "3.4.1",
+    "typescript": "~3.7.2"
+  }
+}

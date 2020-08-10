@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Fragment } from 'react'
+import React, { useState, useEffect, useCallback, Fragment, useRef } from 'react'
 import { TRecipesProps } from './Recipes.types'
 import { TRecipe } from './Recipe.types'
 import Recipe from './Recipe'
@@ -6,22 +6,40 @@ import InfiniteScroll from 'react-infinite-scroller'
 import GridList from '@material-ui/core/GridList'
 import { CircularProgress } from '@material-ui/core'
 import { useRecipesStyles } from './Recipes.styles'
+import { delay } from 'lodash'
 
 const baseEndpoint = 'http://www.recipepuppy.com/api/'
 const proxy = 'http://localhost:8080/'
-let recipesResults: Array<TRecipe> = []
+
+let recipesStorage: Array<TRecipe> = JSON.parse(localStorage.getItem('recipes') || '[]')
+let pageStorage: number = parseInt((recipesStorage.length && localStorage.getItem('page')) || '0')
 
 function Recipes(props: TRecipesProps) {
   const { search, ingredients } = props
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState<boolean>(true)
-  const [recipes, setRecipes] = useState<Array<TRecipe>>([])
+  const [recipes, setRecipes] = useState<Array<TRecipe>>(recipesStorage)
+  const [pageStart, setPageStart] = useState<number | null>(pageStorage)
+  const isInitialMount = useRef(true)
+
+  const updateState = useCallback((hasMoreUpdate: boolean, pageNumberUpdate: number, recipesStorageUpdate: Array<TRecipe>) => {
+    setHasMore(hasMoreUpdate)
+    recipesStorage = recipesStorageUpdate
+    localStorage.setItem('recipes', JSON.stringify(recipesStorageUpdate))
+    setRecipes(recipesStorageUpdate)
+    pageStorage = pageNumberUpdate
+    localStorage.setItem('page', String(pageNumberUpdate))
+    setPageStart(pageNumberUpdate)
+  }, [])
 
   useEffect(() => {
-    setHasMore(true)
-    recipesResults = []
-    setRecipes(recipesResults)
-  }, [search, ingredients])
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+    } else {
+      setPageStart(null)
+      delay(() => updateState(true, 0, []), 1)
+    }
+  }, [search, ingredients, updateState])
 
   const getUrl = useCallback(
     (pageNumber: number): string => {
@@ -40,10 +58,8 @@ function Recipes(props: TRecipesProps) {
       try {
         const response = await fetch(url)
         const data = await response.json()
-        setHasMore(Boolean(data.results.length))
-        recipesResults = [...recipesResults, ...data.results]
-        setRecipes(recipesResults)
-        if (!recipesResults.length && !data.results.length) {
+        updateState(Boolean(data.results.length), pageNumber, [...recipesStorage, ...data.results])
+        if (!recipesStorage.length && !data.results.length) {
           setError('Nothing found!')
         }
       } catch (error) {
@@ -51,7 +67,7 @@ function Recipes(props: TRecipesProps) {
         setError('Could not fetch!')
       }
     },
-    [getUrl]
+    [getUrl, updateState]
   )
 
   const classes = useRecipesStyles()
@@ -59,12 +75,14 @@ function Recipes(props: TRecipesProps) {
   if (!search && !ingredients) {
     return <div className={classes.text}>Type something in order to search recipes.</div>
   }
-
+  if (pageStart === null) {
+    return null
+  }
   return (
     <Fragment>
       <InfiniteScroll
         key={`${search}-${ingredients}`}
-        pageStart={0}
+        pageStart={pageStart}
         loadMore={loadMore}
         hasMore={hasMore}
         loader={<CircularProgress key="recipes-loader" className={classes.text} />}
